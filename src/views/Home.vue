@@ -2,15 +2,15 @@
   <div class="home w-full flex flex-col justify-start items-center py-20 px-32 h-screen">
     <div class="search-filter flex justify-between items-center w-full">
       <div>
-        <input type="text" v-model="inputSearch" @keydown.enter="() => searchCountry()" placeholder="Search for a country..." class="px-3 shadow-md rounded-md h-16 w-96">
+        <input type="text" v-model="inputSearch" @keyup.enter="searchCountry" placeholder="Search for a country..." class="px-3 shadow-md rounded-md h-16 w-96">
       </div>
       <div class="filter_list">
-        <select name="continent" id="" v-model="continentSelect" class="px-3 shadow-md rounded-md h-12 w-44">
+        <select name="continent" id="" v-model="continentSelect" @change="searchContinent" class="px-3 shadow-md rounded-md h-12 w-44">
           <option value="africa">Africa</option>
-          <option value="america" >America</option>
-          <option value="asia" >Asia</option>
-          <option value="europe" >Europe</option>
-          <option value="oceania" >Oceania</option>
+          <option value="americas">America</option>
+          <option value="asia">Asia</option>
+          <option value="europe">Europe</option>
+          <option value="oceania">Oceania</option>
         </select>
       </div>
     </div>
@@ -44,6 +44,7 @@ export default {
       inputSearch: "",
       continentSelect: "",
       countriesList: null,
+      countriesByContinent: null,
       filterCountry: null,
     }
   },
@@ -56,32 +57,36 @@ export default {
     },
     searchCountry(){
       if(this.inputSearch) {
-        this.filterCountry = [],
-        axios.get(`https://restcountries.com/v2/name/${this.inputSearch}`)
+        this.countriesByContinent = [];
+        axios.get(`https://restcountries.com/v2/all`)
           .then(response => {
-            this.filterCountry = response.data;
+            if(response.data[0]) {
+              this.filterCountry = response.data.filter(item => item.name.toLowerCase().startsWith(this.inputSearch.toLowerCase()));
+            }
           })
       }
     },
     searchContinent(){
-      this.filterCountry = [],
-      axios.get(`https://restcountries.com/v2/region/${this.continentSelect}`)
-        .then(response => {
-          // console.log(response.data);
-          this.countriesList = response.data;
-        })
+      this.countriesByContinent = [];
+      if (this.continentSelect) {
+        axios.get(`https://restcountries.com/v2/region/${this.continentSelect}`)
+          .then(response => {
+            this.countriesByContinent = response.data
+          })
+      } else {
+        false
+      }
     }
   },
   computed: {
     filterList: function () {
       if (this.continentSelect) {
-        this.searchContinent();
-        return this.countriesList
-      } else if (this.countriesList){
-          return this.countriesList;
+        return this.countriesByContinent;
+      } else if (this.filterCountry){
+        return this.filterCountry;
       } else {
-          return []
-      } 
+          return this.countriesList;
+      }
     }
   },
   mounted(){
